@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:midi_win_plugin/midi_win_plugin.dart';
 
@@ -26,20 +26,17 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> initPlatformState() async {
-    List<String>? devices;
+    List<MidiDevice>? devices;
     try {
       devices = await _midiWinPlugin.getDevices();
     } on PlatformException {
       devices = [];
     }
 
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
     if (!mounted) return;
 
     setState(() {
-      _platformVersion = devices!.join(" and ");
+      _platformVersion = devices!.map((e) => e.name).join(" and ");
     });
   }
 

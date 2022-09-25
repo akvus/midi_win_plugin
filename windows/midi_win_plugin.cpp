@@ -81,7 +81,8 @@ std::vector<flutter::EncodableValue> MidiWinPlugin::getDevices() {
       error.printMessage();
       goto cleanup;
     }
-		deviceNames.push_back(flutter::EncodableValue(portName));
+		std::string deviceData = "IN;" + std::to_string(i) + ";" + portName;
+		deviceNames.push_back(flutter::EncodableValue(deviceData));
     std::cout << "  Input Port #" << i+1 << ": " << portName << '\n';
   }
   // RtMidiOut constructor
@@ -103,7 +104,8 @@ std::vector<flutter::EncodableValue> MidiWinPlugin::getDevices() {
       error.printMessage();
       goto cleanup;
     }
-		deviceNames.push_back(flutter::EncodableValue(portName));
+		std::string deviceData = "OUT;" + std::to_string(i) + ";" + portName;
+		deviceNames.push_back(flutter::EncodableValue(deviceData));
     std::cout << "  Output Port #" << i+1 << ": " << portName << '\n';
   }
   std::cout << '\n';

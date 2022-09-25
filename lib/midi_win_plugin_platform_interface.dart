@@ -1,3 +1,4 @@
+import 'package:flutter_midi_command_platform_interface/flutter_midi_command_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'midi_win_plugin_method_channel.dart';
@@ -23,7 +24,7 @@ abstract class MidiWinPluginPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Future<List<String>?> getDevices() {
+  Future<List<MidiDevice>?> getDevices() {
     throw UnimplementedError('getDevices() has not been implemented.');
   }
 }

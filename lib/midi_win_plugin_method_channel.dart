@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_midi_command_platform_interface/flutter_midi_command_platform_interface.dart';
 
 import 'midi_win_plugin_platform_interface.dart';
 
@@ -10,10 +11,14 @@ class MethodChannelMidiWinPlugin extends MidiWinPluginPlatform {
   final methodChannel = const MethodChannel('midi_win_plugin');
 
   @override
-  Future<List<String>?> getDevices() async {
+  Future<List<MidiDevice>?> getDevices() async {
     final devices =
         await methodChannel.invokeMethod<List<Object?>>('getDevices');
 
-    return devices!.map((e) => e as String).toList();
+    return devices!.map((e) {
+      final deviceData = (e as String).split(';');
+
+      return MidiDevice(deviceData[1], deviceData[2], deviceData[0], false);
+    }).toList();
   }
 }
