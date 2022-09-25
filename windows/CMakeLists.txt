@@ -16,6 +16,8 @@ set(PLUGIN_NAME "midi_win_plugin_plugin")
 list(APPEND PLUGIN_SOURCES
   "midi_win_plugin.cpp"
   "midi_win_plugin.h"
+	"RtMidi.cpp"
+	"RtMidi.h"
 )
 
 # Define the plugin library target. Its name must not be changed (see comment
@@ -42,7 +44,7 @@ target_compile_definitions(${PLUGIN_NAME} PRIVATE FLUTTER_PLUGIN_IMPL)
 # dependencies here.
 target_include_directories(${PLUGIN_NAME} INTERFACE
   "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_link_libraries(${PLUGIN_NAME} PRIVATE flutter flutter_wrapper_plugin)
+target_link_libraries(${PLUGIN_NAME} PRIVATE flutter flutter_wrapper_plugin winmm.lib)
 
 # List of absolute paths to libraries that should be bundled with the plugin.
 # This list could contain prebuilt libraries, or libraries created by an

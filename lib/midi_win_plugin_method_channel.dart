@@ -10,8 +10,10 @@ class MethodChannelMidiWinPlugin extends MidiWinPluginPlatform {
   final methodChannel = const MethodChannel('midi_win_plugin');
 
   @override
-  Future<String?> getPlatformVersion() async {
-    final version = await methodChannel.invokeMethod<String>('getPlatformVersion');
-    return version;
+  Future<List<String>?> getDevices() async {
+    final devices =
+        await methodChannel.invokeMethod<List<Object?>>('getDevices');
+
+    return devices!.map((e) => e as String).toList();
   }
 }

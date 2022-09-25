@@ -23,7 +23,7 @@ abstract class MidiWinPluginPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Future<String?> getPlatformVersion() {
-    throw UnimplementedError('platformVersion() has not been implemented.');
+  Future<List<String>?> getDevices() {
+    throw UnimplementedError('getDevices() has not been implemented.');
   }
 }

@@ -13,6 +13,11 @@
 #include <memory>
 #include <sstream>
 
+#include <mmsystem.h>
+
+#define __WINDOWS_MM__
+#include "RtMidi.h"
+
 namespace midi_win_plugin {
 
 // static
@@ -40,20 +45,75 @@ MidiWinPlugin::~MidiWinPlugin() {}
 void MidiWinPlugin::HandleMethodCall(
     const flutter::MethodCall<flutter::EncodableValue> &method_call,
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
-  if (method_call.method_name().compare("getPlatformVersion") == 0) {
-    std::ostringstream version_stream;
-    version_stream << "Windows ";
-    if (IsWindows10OrGreater()) {
-      version_stream << "10+";
-    } else if (IsWindows8OrGreater()) {
-      version_stream << "8";
-    } else if (IsWindows7OrGreater()) {
-      version_stream << "7";
-    }
-    result->Success(flutter::EncodableValue(version_stream.str()));
+  if (method_call.method_name().compare("getDevices") == 0) {
+		std::vector<flutter::EncodableValue> list = this->getDevices();
+    result->Success(list);
   } else {
     result->NotImplemented();
   }
+}
+
+std::vector<flutter::EncodableValue> MidiWinPlugin::getDevices() {
+	//UINT nMidiDeviceNum;
+
+	//nMidiDeviceNum = midiInGetNumDevs();
+	//std::cout << nMidiDeviceNum << " XX\n";
+	std::vector<flutter::EncodableValue> deviceNames {};
+
+	RtMidiIn *midiin = 0;
+  RtMidiOut *midiout = 0;
+  try {
+    midiin = new RtMidiIn();
+  }
+  catch ( RtMidiError &error ) {
+    error.printMessage();
+    exit( EXIT_FAILURE );
+  }
+  // Check inputs.
+  unsigned int nPorts = midiin->getPortCount();
+  std::cout << "\nThere are " << nPorts << " MIDI input sources available.\n";
+  std::string portName;
+  for ( unsigned int i=0; i<nPorts; i++ ) {
+    try {
+      portName = midiin->getPortName(i);
+    }
+    catch ( RtMidiError &error ) {
+      error.printMessage();
+      goto cleanup;
+    }
+		deviceNames.push_back(flutter::EncodableValue(portName));
+    std::cout << "  Input Port #" << i+1 << ": " << portName << '\n';
+  }
+  // RtMidiOut constructor
+  try {
+    midiout = new RtMidiOut();
+  }
+  catch ( RtMidiError &error ) {
+    error.printMessage();
+    exit( EXIT_FAILURE );
+  }
+  // Check outputs.
+  nPorts = midiout->getPortCount();
+  std::cout << "\nThere are " << nPorts << " MIDI output ports available.\n";
+  for ( unsigned int i=0; i<nPorts; i++ ) {
+    try {
+      portName = midiout->getPortName(i);
+    }
+    catch (RtMidiError &error) {
+      error.printMessage();
+      goto cleanup;
+    }
+		deviceNames.push_back(flutter::EncodableValue(portName));
+    std::cout << "  Output Port #" << i+1 << ": " << portName << '\n';
+  }
+  std::cout << '\n';
+
+  // Clean up
+ cleanup:
+  delete midiin;
+  delete midiout;
+
+	return deviceNames;
 }
 
 }  // namespace midi_win_plugin
