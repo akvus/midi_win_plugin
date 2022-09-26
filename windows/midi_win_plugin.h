@@ -30,6 +30,8 @@ class MidiWinPlugin : public flutter::Plugin {
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
 
 	std::vector<flutter::EncodableValue> getDevices();
+
+	flutter::EncodableValue getDevice(int port, std::string portName, bool isIn);
 };
 
 }  // namespace midi_win_plugin

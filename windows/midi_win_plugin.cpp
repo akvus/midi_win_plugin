@@ -83,22 +83,7 @@ flutter::EncodableList MidiWinPlugin::getDevices() {
       goto cleanup;
     }
 
-		int port = (int) i;
-
-		flutter::EncodableList inputs = flutter::EncodableList{flutter::EncodableValue(
-				EncodableMap {
-				 {EncodableValue("id"), EncodableValue(port)}
-				} 
-				)};
-
-		devices.push_back(flutter::EncodableValue(flutter::EncodableMap {
-				{flutter::EncodableValue("id"), flutter::EncodableValue(port)},
-				{flutter::EncodableValue("name"), flutter::EncodableValue(portName)},
-				{flutter::EncodableValue("type"), flutter::EncodableValue("IN")},
-				{flutter::EncodableValue("inputs"), flutter::EncodableValue(inputs)},
-				{flutter::EncodableValue("outputs"), flutter::EncodableValue(flutter::EncodableList())},
-				{flutter::EncodableValue("connected"), flutter::EncodableValue("false")}
-		}));
+		devices.push_back(this->getDevice(i, portName, true));
   }
 
   try {
@@ -119,24 +104,7 @@ flutter::EncodableList MidiWinPlugin::getDevices() {
       goto cleanup;
     }
 
-
-		// TODO DRY
-		int port = (int) i;
-
-		flutter::EncodableList outputs = flutter::EncodableList{flutter::EncodableValue(
-				EncodableMap {
-				 {EncodableValue("id"), EncodableValue(port)}
-				} 
-				)};
-
-		devices.push_back(flutter::EncodableValue(flutter::EncodableMap {
-				{flutter::EncodableValue("id"), flutter::EncodableValue(port)},
-				{flutter::EncodableValue("name"), flutter::EncodableValue(portName)},
-				{flutter::EncodableValue("type"), flutter::EncodableValue("OUT")},
-				{flutter::EncodableValue("inputs"), flutter::EncodableValue(flutter::EncodableList())},
-				{flutter::EncodableValue("outputs"), flutter::EncodableValue(outputs)},
-				{flutter::EncodableValue("connected"), flutter::EncodableValue("false")}
-		}));
+		devices.push_back(this->getDevice(i, portName, false));
   }
 
  cleanup:
@@ -144,6 +112,26 @@ flutter::EncodableList MidiWinPlugin::getDevices() {
   delete midiout;
 
 	return devices;
+}
+
+flutter::EncodableValue MidiWinPlugin::getDevice(int port, std::string portName, bool isIn) {
+		EncodableList ports = EncodableList{EncodableValue(
+				EncodableMap {
+				 {EncodableValue("id"), EncodableValue(port)}
+				} 
+				)};
+
+		EncodableList inputs = isIn ? ports : EncodableList();
+		EncodableList outputs  = isIn ? EncodableList() : ports;
+		
+		return EncodableValue(EncodableMap {
+				{EncodableValue("id"), EncodableValue(port)},
+				{EncodableValue("name"), EncodableValue(portName)},
+				{EncodableValue("type"), EncodableValue(isIn ? "IN" : "OUT")},
+				{EncodableValue("inputs"), EncodableValue(inputs)},
+				{EncodableValue("outputs"), EncodableValue(outputs)},
+				{EncodableValue("connected"), EncodableValue("false")}
+		});
 }
 
 }  // namespace midi_win_plugin
