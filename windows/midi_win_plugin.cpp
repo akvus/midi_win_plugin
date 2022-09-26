@@ -25,7 +25,7 @@ void MidiWinPlugin::RegisterWithRegistrar(
     flutter::PluginRegistrarWindows *registrar) {
   auto channel =
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
-          registrar->messenger(), "midi_win_plugin",
+          registrar->messenger(), "plugins.invisiblewrench.com/flutter_midi_command",
           &flutter::StandardMethodCodec::GetInstance());
 
   auto plugin = std::make_unique<MidiWinPlugin>();
