@@ -62,6 +62,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.1"
+  flutter_midi_command:
+    dependency: "direct main"
+    description:
+      name: flutter_midi_command
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.4.8"
   flutter_midi_command_platform_interface:
     dependency: transitive
     description:

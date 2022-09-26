@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_midi_command/flutter_midi_command.dart';
 import 'package:midi_win_plugin/midi_win_plugin.dart';
 
 void main() {
+  MidiWinPlugin();
   runApp(const MyApp());
 }
 
@@ -17,7 +19,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
-  final _midiWinPlugin = MidiWinPlugin();
+  final _midiCommand = MidiCommand();
 
   @override
   void initState() {
@@ -28,7 +30,7 @@ class _MyAppState extends State<MyApp> {
   Future<void> initPlatformState() async {
     List<MidiDevice>? devices;
     try {
-      devices = await _midiWinPlugin.getDevices();
+      devices = await _midiCommand.devices;
     } on PlatformException {
       devices = [];
     }
