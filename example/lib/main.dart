@@ -16,8 +16,9 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
   final _midiCommand = MidiCommand();
+
+  List<MidiDevice> _devices = [];
 
   @override
   void initState() {
@@ -26,9 +27,9 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> initPlatformState() async {
-    List<MidiDevice>? devices;
+    List<MidiDevice> devices;
     try {
-      devices = await _midiCommand.devices;
+      devices = await _midiCommand.devices ?? [];
     } on PlatformException {
       devices = [];
     }
@@ -36,7 +37,7 @@ class _MyAppState extends State<MyApp> {
     if (!mounted) return;
 
     setState(() {
-      _platformVersion = devices!.map((e) => e.name).join(" and ");
+      _devices = devices;
     });
   }
 
@@ -47,8 +48,23 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(
           title: const Text('Plugin example app'),
         ),
-        body: Center(
-          child: Text('Running on: $_platformVersion\n'),
+        body: Column(
+          children: [
+            Text(_devices.length.toString()),
+            SizedBox(
+              height: 300,
+              child: ListView.separated(
+                separatorBuilder: (context, index) => SizedBox(height: 20),
+                itemBuilder: (context, index) {
+                  final item = _devices[index];
+
+                  return Text(
+                      "${item.name} || ${item.id} ${item.type} ${item.connected} ${item.inputPorts} ${item.outputPorts}");
+                },
+                itemCount: _devices.length,
+              ),
+            ),
+          ],
         ),
       ),
     );

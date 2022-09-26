@@ -20,6 +20,8 @@
 #define __WINDOWS_MM__
 #include "RtMidi.h"
 
+using namespace flutter;
+
 namespace midi_win_plugin {
 
 // static
@@ -81,11 +83,19 @@ flutter::EncodableList MidiWinPlugin::getDevices() {
       goto cleanup;
     }
 
+		int port = (int) i;
+
+		flutter::EncodableList inputs = flutter::EncodableList{flutter::EncodableValue(
+				EncodableMap {
+				 {EncodableValue("id"), EncodableValue(port)}
+				} 
+				)};
+
 		devices.push_back(flutter::EncodableValue(flutter::EncodableMap {
-				{flutter::EncodableValue("id"), flutter::EncodableValue(std::to_string(i))},
+				{flutter::EncodableValue("id"), flutter::EncodableValue(port)},
 				{flutter::EncodableValue("name"), flutter::EncodableValue(portName)},
 				{flutter::EncodableValue("type"), flutter::EncodableValue("IN")},
-				{flutter::EncodableValue("inputs"), flutter::EncodableValue(flutter::EncodableList())},
+				{flutter::EncodableValue("inputs"), flutter::EncodableValue(inputs)},
 				{flutter::EncodableValue("outputs"), flutter::EncodableValue(flutter::EncodableList())},
 				{flutter::EncodableValue("connected"), flutter::EncodableValue("false")}
 		}));
@@ -109,12 +119,22 @@ flutter::EncodableList MidiWinPlugin::getDevices() {
       goto cleanup;
     }
 
+
+		// TODO DRY
+		int port = (int) i;
+
+		flutter::EncodableList outputs = flutter::EncodableList{flutter::EncodableValue(
+				EncodableMap {
+				 {EncodableValue("id"), EncodableValue(port)}
+				} 
+				)};
+
 		devices.push_back(flutter::EncodableValue(flutter::EncodableMap {
-				{flutter::EncodableValue("id"), flutter::EncodableValue(std::to_string(i))},
+				{flutter::EncodableValue("id"), flutter::EncodableValue(port)},
 				{flutter::EncodableValue("name"), flutter::EncodableValue(portName)},
 				{flutter::EncodableValue("type"), flutter::EncodableValue("OUT")},
 				{flutter::EncodableValue("inputs"), flutter::EncodableValue(flutter::EncodableList())},
-				{flutter::EncodableValue("outputs"), flutter::EncodableValue(flutter::EncodableList())},
+				{flutter::EncodableValue("outputs"), flutter::EncodableValue(outputs)},
 				{flutter::EncodableValue("connected"), flutter::EncodableValue("false")}
 		}));
   }
