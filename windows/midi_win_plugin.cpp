@@ -20,11 +20,19 @@
 #define __WINDOWS_MM__
 #include "RtMidi.h"
 
+
+/*
+ * TODO: 
+ * - connectToDevice
+ * - disconnectDevice
+ * - onMidiSetupChanged
+ * - onMidiDataReceived
+ * */
+
 using namespace flutter;
 
 namespace midi_win_plugin {
 
-// static
 void MidiWinPlugin::RegisterWithRegistrar(
     flutter::PluginRegistrarWindows *registrar) {
   auto channel =
@@ -50,11 +58,21 @@ void MidiWinPlugin::HandleMethodCall(
     const flutter::MethodCall<flutter::EncodableValue> &method_call,
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
   if (method_call.method_name().compare("getDevices") == 0) {
-
 		flutter::EncodableList list = this->getDevices();
 
     result->Success(flutter::EncodableValue(list));
-  } else {
+  } 
+	else if (method_call.method_name().compare("connectToDevice") == 0) { 
+    this->connectToDevice();
+
+    result->Success(flutter::EncodableValue(true));
+	}
+	else if (method_call.method_name().compare("disconnectDevice") == 0) { 
+    this->disconnectDevice();
+
+    result->Success(flutter::EncodableValue(true));
+	}
+	else {
     result->NotImplemented();
   }
 }
@@ -132,6 +150,14 @@ flutter::EncodableValue MidiWinPlugin::getDevice(int port, std::string portName,
 				{EncodableValue("outputs"), EncodableValue(outputs)},
 				{EncodableValue("connected"), EncodableValue("false")}
 		});
+}
+
+void MidiWinPlugin::connectToDevice() {
+
+}
+
+void MidiWinPlugin::disconnectDevice() {
+
 }
 
 }  // namespace midi_win_plugin
