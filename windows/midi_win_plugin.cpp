@@ -55,30 +55,30 @@ MidiWinPlugin::MidiWinPlugin() {}
 MidiWinPlugin::~MidiWinPlugin() {}
 
 void MidiWinPlugin::HandleMethodCall(
-    const flutter::MethodCall<flutter::EncodableValue> &method_call,
-    std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
+    const MethodCall<EncodableValue> &method_call,
+    std::unique_ptr<MethodResult<EncodableValue>> result) {
   if (method_call.method_name().compare("getDevices") == 0) {
-		flutter::EncodableList list = this->getDevices();
+		EncodableList list = this->getDevices();
 
-    result->Success(flutter::EncodableValue(list));
+    result->Success(EncodableValue(list));
   } 
 	else if (method_call.method_name().compare("connectToDevice") == 0) { 
     this->connectToDevice();
 
-    result->Success(flutter::EncodableValue(true));
+    result->Success(EncodableValue(true));
 	}
 	else if (method_call.method_name().compare("disconnectDevice") == 0) { 
     this->disconnectDevice();
 
-    result->Success(flutter::EncodableValue(true));
+    result->Success(EncodableValue(true));
 	}
 	else {
     result->NotImplemented();
   }
 }
 
-flutter::EncodableList MidiWinPlugin::getDevices() {
-	flutter::EncodableList devices = {};
+EncodableList MidiWinPlugin::getDevices() {
+	EncodableList devices = {};
 	RtMidiIn *midiin = 0;
   RtMidiOut *midiout = 0;
 
