@@ -57,12 +57,26 @@ MidiWinPlugin::~MidiWinPlugin() {}
 void MidiWinPlugin::HandleMethodCall(
     const MethodCall<EncodableValue> &method_call,
     std::unique_ptr<MethodResult<EncodableValue>> result) {
+
+  const auto *arguments = std::get_if<EncodableMap>(method_call.arguments());
+
   if (method_call.method_name().compare("getDevices") == 0) {
 		EncodableList list = this->getDevices();
 
     result->Success(EncodableValue(list));
   } 
 	else if (method_call.method_name().compare("connectToDevice") == 0) { 
+		auto deviceValue = (arguments->find(EncodableValue("device")))->second;
+		auto ports = (arguments->find(EncodableValue("ports")))->second;
+
+		auto device = static_cast<EncodableMap>(std::get<EncodableMap>((deviceValue)));
+		auto idValue = device["id"];
+
+		// TODO this does not work
+    const auto *id = std::get_if<std::string>(idValue);
+
+		std::cout << typeid(id).name() << " -------------- " << std::endl;
+
     this->connectToDevice();
 
     result->Success(EncodableValue(true));
