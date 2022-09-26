@@ -7,7 +7,6 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 class MockMidiWinPluginPlatform
     with MockPlatformInterfaceMixin
     implements MidiWinPluginPlatform {
-
   @override
   Future<String?> getPlatformVersion() => Future.value('42');
 }
@@ -15,8 +14,8 @@ class MockMidiWinPluginPlatform
 void main() {
   final MidiWinPluginPlatform initialPlatform = MidiWinPluginPlatform.instance;
 
-  test('$MethodChannelMidiWinPlugin is the default instance', () {
-    expect(initialPlatform, isInstanceOf<MethodChannelMidiWinPlugin>());
+  test('$MethodChannelMidiCommandWindows is the default instance', () {
+    expect(initialPlatform, isInstanceOf<MethodChannelMidiCommandWindows>());
   });
 
   test('getPlatformVersion', () async {

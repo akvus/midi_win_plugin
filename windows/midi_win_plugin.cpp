@@ -9,9 +9,11 @@
 #include <flutter/method_channel.h>
 #include <flutter/plugin_registrar_windows.h>
 #include <flutter/standard_method_codec.h>
+#include <flutter/encodable_value.h>
 
 #include <memory>
 #include <sstream>
+#include <map>
 
 #include <mmsystem.h>
 
@@ -46,22 +48,20 @@ void MidiWinPlugin::HandleMethodCall(
     const flutter::MethodCall<flutter::EncodableValue> &method_call,
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
   if (method_call.method_name().compare("getDevices") == 0) {
-		std::vector<flutter::EncodableValue> list = this->getDevices();
-    result->Success(list);
+
+		flutter::EncodableList list = this->getDevices();
+
+    result->Success(flutter::EncodableValue(list));
   } else {
     result->NotImplemented();
   }
 }
 
-std::vector<flutter::EncodableValue> MidiWinPlugin::getDevices() {
-	//UINT nMidiDeviceNum;
-
-	//nMidiDeviceNum = midiInGetNumDevs();
-	//std::cout << nMidiDeviceNum << " XX\n";
-	std::vector<flutter::EncodableValue> deviceNames {};
-
+flutter::EncodableList MidiWinPlugin::getDevices() {
+	flutter::EncodableList devices = {};
 	RtMidiIn *midiin = 0;
   RtMidiOut *midiout = 0;
+
   try {
     midiin = new RtMidiIn();
   }
@@ -69,9 +69,8 @@ std::vector<flutter::EncodableValue> MidiWinPlugin::getDevices() {
     error.printMessage();
     exit( EXIT_FAILURE );
   }
-  // Check inputs.
+
   unsigned int nPorts = midiin->getPortCount();
-  std::cout << "\nThere are " << nPorts << " MIDI input sources available.\n";
   std::string portName;
   for ( unsigned int i=0; i<nPorts; i++ ) {
     try {
@@ -81,11 +80,17 @@ std::vector<flutter::EncodableValue> MidiWinPlugin::getDevices() {
       error.printMessage();
       goto cleanup;
     }
-		std::string deviceData = "IN;" + std::to_string(i) + ";" + portName;
-		deviceNames.push_back(flutter::EncodableValue(deviceData));
-    std::cout << "  Input Port #" << i+1 << ": " << portName << '\n';
+
+		devices.push_back(flutter::EncodableValue(flutter::EncodableMap {
+				{flutter::EncodableValue("id"), flutter::EncodableValue(std::to_string(i))},
+				{flutter::EncodableValue("name"), flutter::EncodableValue(portName)},
+				{flutter::EncodableValue("type"), flutter::EncodableValue("IN")},
+				{flutter::EncodableValue("inputs"), flutter::EncodableValue(flutter::EncodableList())},
+				{flutter::EncodableValue("outputs"), flutter::EncodableValue(flutter::EncodableList())},
+				{flutter::EncodableValue("connected"), flutter::EncodableValue("false")}
+		}));
   }
-  // RtMidiOut constructor
+
   try {
     midiout = new RtMidiOut();
   }
@@ -93,9 +98,8 @@ std::vector<flutter::EncodableValue> MidiWinPlugin::getDevices() {
     error.printMessage();
     exit( EXIT_FAILURE );
   }
-  // Check outputs.
+
   nPorts = midiout->getPortCount();
-  std::cout << "\nThere are " << nPorts << " MIDI output ports available.\n";
   for ( unsigned int i=0; i<nPorts; i++ ) {
     try {
       portName = midiout->getPortName(i);
@@ -104,18 +108,22 @@ std::vector<flutter::EncodableValue> MidiWinPlugin::getDevices() {
       error.printMessage();
       goto cleanup;
     }
-		std::string deviceData = "OUT;" + std::to_string(i) + ";" + portName;
-		deviceNames.push_back(flutter::EncodableValue(deviceData));
-    std::cout << "  Output Port #" << i+1 << ": " << portName << '\n';
-  }
-  std::cout << '\n';
 
-  // Clean up
+		devices.push_back(flutter::EncodableValue(flutter::EncodableMap {
+				{flutter::EncodableValue("id"), flutter::EncodableValue(std::to_string(i))},
+				{flutter::EncodableValue("name"), flutter::EncodableValue(portName)},
+				{flutter::EncodableValue("type"), flutter::EncodableValue("OUT")},
+				{flutter::EncodableValue("inputs"), flutter::EncodableValue(flutter::EncodableList())},
+				{flutter::EncodableValue("outputs"), flutter::EncodableValue(flutter::EncodableList())},
+				{flutter::EncodableValue("connected"), flutter::EncodableValue("false")}
+		}));
+  }
+
  cleanup:
   delete midiin;
   delete midiout;
 
-	return deviceNames;
+	return devices;
 }
 
 }  // namespace midi_win_plugin

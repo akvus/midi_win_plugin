@@ -3,10 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_midi_command/flutter_midi_command.dart';
-import 'package:midi_win_plugin/midi_win_plugin.dart';
 
 void main() {
-  MidiWinPlugin();
   runApp(const MyApp());
 }
 

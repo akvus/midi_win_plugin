@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:midi_win_plugin/midi_win_plugin_method_channel.dart';
 
 void main() {
-  MethodChannelMidiWinPlugin platform = MethodChannelMidiWinPlugin();
+  MethodChannelMidiCommandWindows platform = MethodChannelMidiCommandWindows();
   const MethodChannel channel = MethodChannel('midi_win_plugin');
 
   TestWidgetsFlutterBinding.ensureInitialized();
