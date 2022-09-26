@@ -1,17 +1,15 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_midi_command_platform_interface/flutter_midi_command_platform_interface.dart';
+import 'package:flutter_midi_command_platform_interface/method_channel_midi_command.dart';
 
-import 'midi_win_plugin_platform_interface.dart';
-
-/// An implementation of [MidiWinPluginPlatform] that uses method channels.
-class MethodChannelMidiWinPlugin extends MidiWinPluginPlatform {
+class MethodChannelMidiWinPlugin extends MethodChannelMidiCommand {
   /// The method channel used to interact with the native platform.
   @visibleForTesting
   final methodChannel = const MethodChannel('midi_win_plugin');
 
   @override
-  Future<List<MidiDevice>?> getDevices() async {
+  Future<List<MidiDevice>?> get devices async {
     final devices =
         await methodChannel.invokeMethod<List<Object?>>('getDevices');
 
