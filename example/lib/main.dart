@@ -68,7 +68,9 @@ class _MyAppState extends State<MyApp> {
               children: [
                 ElevatedButton(
                     onPressed: () {
-                      _midiCommand.connectToDevice(_devices[0]);
+                      _midiCommand.connectToDevice(_devices
+                          .where((element) => element.type == "IN")
+                          .first);
                     },
                     child: Text("Connect")),
                 ElevatedButton(

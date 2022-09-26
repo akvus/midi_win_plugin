@@ -32,7 +32,7 @@ class MidiWinPlugin : public flutter::Plugin {
 	std::vector<flutter::EncodableValue> getDevices();
 	flutter::EncodableValue getDevice(int port, std::string portName, bool isIn);
 
-	void connectToDevice();
+	void connectToDevice(int portNumber);
 	void disconnectDevice();
 };
 

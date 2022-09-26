@@ -11,9 +11,14 @@
 #include <flutter/standard_method_codec.h>
 #include <flutter/encodable_value.h>
 
+#include <iostream>
+#include <cstdlib>
+#include <signal.h>
 #include <memory>
 #include <sstream>
 #include <map>
+#include <chrono>
+#include <thread>
 
 #include <mmsystem.h>
 
@@ -69,15 +74,13 @@ void MidiWinPlugin::HandleMethodCall(
 		auto deviceValue = (arguments->find(EncodableValue("device")))->second;
 		auto ports = (arguments->find(EncodableValue("ports")))->second;
 
-		auto device = static_cast<EncodableMap>(std::get<EncodableMap>((deviceValue)));
-		auto idValue = device["id"];
+		auto device = static_cast<EncodableMap>(std::get<EncodableMap>(deviceValue));
+		auto idValue = device[EncodableValue("id")];
 
-		// TODO this does not work
-    const auto *id = std::get_if<std::string>(idValue);
+    auto id = std::get<std::string>(idValue);
+		auto portNumber = std::stoi(id);
 
-		std::cout << typeid(id).name() << " -------------- " << std::endl;
-
-    this->connectToDevice();
+    this->connectToDevice(portNumber);
 
     result->Success(EncodableValue(true));
 	}
@@ -166,8 +169,46 @@ flutter::EncodableValue MidiWinPlugin::getDevice(int port, std::string portName,
 		});
 }
 
-void MidiWinPlugin::connectToDevice() {
+bool done;
+static void finish(int ignore){ done = true; }
 
+void MidiWinPlugin::connectToDevice(int portNumber) {
+	RtMidiIn *midiin = new RtMidiIn();
+  std::vector<unsigned char> message;
+  int i;
+	size_t nBytes;
+  double stamp;
+
+  unsigned int nPorts = midiin->getPortCount();
+  if ( nPorts == 0 ) {
+    std::cout << "No ports available!\n";
+    goto cleanup;
+  }
+
+  midiin->openPort( portNumber );
+  midiin->ignoreTypes( false, false, false );
+
+  // Install an interrupt handler function.
+  done = false;
+  (void) signal(SIGINT, finish);
+
+  // Periodically check input queue.
+  std::cout << "Reading MIDI from port ... quit with Ctrl-C.\n";
+
+  while ( !done ) {
+    stamp = midiin->getMessage( &message );
+    nBytes = message.size();
+    for ( i=0; i<nBytes; i++ )
+      std::cout << "Byte " << i << " = " << (int)message[i] << ", ";
+    if ( nBytes > 0 )
+      std::cout << "stamp = " << stamp << std::endl;
+
+    // Sleep for 10 milliseconds ... platform-dependent.
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+
+ cleanup:
+  delete midiin;
 }
 
 void MidiWinPlugin::disconnectDevice() {
