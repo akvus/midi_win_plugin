@@ -64,6 +64,20 @@ class _MyAppState extends State<MyApp> {
                 itemCount: _devices.length,
               ),
             ),
+            Row(
+              children: [
+                ElevatedButton(
+                    onPressed: () {
+                      _midiCommand.connectToDevice(_devices[0]);
+                    },
+                    child: Text("Connect")),
+                ElevatedButton(
+                    onPressed: () {
+                      _midiCommand.disconnectDevice(_devices[0]);
+                    },
+                    child: Text("Disconnect")),
+              ],
+            ),
           ],
         ),
       ),
