@@ -10,6 +10,9 @@
 #include <flutter/plugin_registrar_windows.h>
 #include <flutter/standard_method_codec.h>
 #include <flutter/encodable_value.h>
+#include <flutter/event_channel.h>
+#include <flutter/event_sink.h>
+#include <flutter/event_stream_handler.h>
 
 #include <iostream>
 #include <cstdlib>
@@ -38,10 +41,14 @@ using namespace flutter;
 
 namespace midi_win_plugin {
 
+typedef flutter::EventChannel<flutter::EncodableValue> FlEventChannel;
+typedef flutter::EventSink<flutter::EncodableValue> FlEventSink;
+typedef flutter::MethodCall<flutter::EncodableValue> FlMethodCall;
+
 void MidiWinPlugin::RegisterWithRegistrar(
     flutter::PluginRegistrarWindows *registrar) {
   auto channel =
-      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+      std::make_unique<MethodChannel<EncodableValue>>(
           registrar->messenger(), "plugins.invisiblewrench.com/flutter_midi_command",
           &flutter::StandardMethodCodec::GetInstance());
 
@@ -169,50 +176,31 @@ flutter::EncodableValue MidiWinPlugin::getDevice(int port, std::string portName,
 		});
 }
 
-bool done;
-static void finish(int ignore){ done = true; }
+void mycallback( double deltatime, std::vector< unsigned char > *message, void *userData )
+{
+  size_t nBytes = message->size();
+  for ( unsigned int i=0; i<nBytes; i++ )
+    std::cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
+  if ( nBytes > 0 )
+    std::cout << "stamp = " << deltatime << std::endl;
+}
+
+// Used when a device is connected
+RtMidiIn *midiin;
 
 void MidiWinPlugin::connectToDevice(int portNumber) {
-	RtMidiIn *midiin = new RtMidiIn();
-  std::vector<unsigned char> message;
-  int i;
-	size_t nBytes;
-  double stamp;
-
-  unsigned int nPorts = midiin->getPortCount();
-  if ( nPorts == 0 ) {
-    std::cout << "No ports available!\n";
-    goto cleanup;
-  }
-
+  midiin = new RtMidiIn();
   midiin->openPort( portNumber );
+  midiin->setCallback( &mycallback );
+  // Don't ignore sysex, timing, or active sensing messages.
   midiin->ignoreTypes( false, false, false );
-
-  // Install an interrupt handler function.
-  done = false;
-  (void) signal(SIGINT, finish);
-
-  // Periodically check input queue.
-  std::cout << "Reading MIDI from port ... quit with Ctrl-C.\n";
-
-  while ( !done ) {
-    stamp = midiin->getMessage( &message );
-    nBytes = message.size();
-    for ( i=0; i<nBytes; i++ )
-      std::cout << "Byte " << i << " = " << (int)message[i] << ", ";
-    if ( nBytes > 0 )
-      std::cout << "stamp = " << stamp << std::endl;
-
-    // Sleep for 10 milliseconds ... platform-dependent.
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  }
-
- cleanup:
-  delete midiin;
+  std::cout << "\nConnected to MIDI device. Reading MIDI input.\n";
 }
 
 void MidiWinPlugin::disconnectDevice() {
+  delete midiin;
 
+  std::cout << "\nDisconnected MIDI device.\n";
 }
 
 }  // namespace midi_win_plugin
