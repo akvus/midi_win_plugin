@@ -46,32 +46,33 @@ typedef flutter::MethodCall<flutter::EncodableValue> FlMethodCall;
 typedef flutter::MethodResult<flutter::EncodableValue> FlMethodResult;
 typedef flutter::MethodChannel<flutter::EncodableValue> FlMethodChannel;
 typedef flutter::StreamHandler<flutter::EncodableValue> FlStreamHandler;
-typedef flutter::StreamHandlerError<flutter::EncodableValue>
-    FlStreamHandlerError;
+typedef flutter::StreamHandlerError<flutter::EncodableValue> FlStreamHandlerError;
 
-auto msgsStreamHandler = 
-      std::make_unique<MidiMessagesStreamHandler>();
+// handler for midi message events
+auto msgsStreamHandler = std::make_unique<MidiMessagesStreamHandler>();
 
+// Set up and register plugin
 void MidiWinPlugin::RegisterWithRegistrar(PluginRegistrarWindows *registrar) {
+  auto plugin = std::make_unique<MidiWinPlugin>();
+
+	// Set up method channel
   auto channel =
       std::make_unique<MethodChannel<EncodableValue>>(
           registrar->messenger(), "plugins.invisiblewrench.com/flutter_midi_command",
           &flutter::StandardMethodCodec::GetInstance());
-
-  auto plugin = std::make_unique<MidiWinPlugin>();
-
   channel->SetMethodCallHandler(
       [plugin_pointer = plugin.get()](const auto &call, auto result) {
         plugin_pointer->HandleMethodCall(call, std::move(result));
       });
 
+	// set up event channel
 	auto eventChannel = std::make_unique<FlEventChannel>(
       registrar->messenger(), "plugins.invisiblewrench.com/flutter_midi_command/rx_channel",
       &flutter::StandardMethodCodec::GetInstance());
-
-
   eventChannel->SetStreamHandler(std::move(msgsStreamHandler));
 
+	// register plugin
+	// TODO not sure that move doesn't brake sth here? but it made this compile xD
   registrar->AddPlugin(std::move(plugin));
 }
 
@@ -92,6 +93,7 @@ void MidiWinPlugin::HandleMethodCall(
     result->Success(EncodableValue(list));
   } 
 	else if (method_call.method_name().compare("connectToDevice") == 0) { 
+    // TODO make some function to get the portNumber
 		auto deviceValue = (arguments->find(EncodableValue("device")))->second;
 		auto ports = (arguments->find(EncodableValue("ports")))->second;
 
@@ -205,7 +207,8 @@ void mycallback( double deltatime, std::vector< unsigned char > *message, void *
     std::cout << "stamp = " << deltatime << std::endl;
 
 	std::cout << "Thread callback: " << std::this_thread::get_id() << std::endl;
-//	msgsStreamHandler->AddMidiMessageEvent();
+	// TODO crashes probably because it's called from another thread
+  msgsStreamHandler->AddMidiMessageEvent();
 }
 
 void MidiWinPlugin::connectToDevice(int portNumber) {
