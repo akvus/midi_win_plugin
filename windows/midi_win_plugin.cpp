@@ -31,10 +31,9 @@
 
 /*
  * TODO: 
- * - connectToDevice
- * - disconnectDevice
  * - onMidiSetupChanged
  * - onMidiDataReceived
+ * - clean all that mess up !!!!
  * */
 
 using namespace flutter;
@@ -44,9 +43,16 @@ namespace midi_win_plugin {
 typedef flutter::EventChannel<flutter::EncodableValue> FlEventChannel;
 typedef flutter::EventSink<flutter::EncodableValue> FlEventSink;
 typedef flutter::MethodCall<flutter::EncodableValue> FlMethodCall;
+typedef flutter::MethodResult<flutter::EncodableValue> FlMethodResult;
+typedef flutter::MethodChannel<flutter::EncodableValue> FlMethodChannel;
+typedef flutter::StreamHandler<flutter::EncodableValue> FlStreamHandler;
+typedef flutter::StreamHandlerError<flutter::EncodableValue>
+    FlStreamHandlerError;
 
-void MidiWinPlugin::RegisterWithRegistrar(
-    flutter::PluginRegistrarWindows *registrar) {
+auto msgsStreamHandler = 
+      std::make_unique<MidiMessagesStreamHandler>();
+
+void MidiWinPlugin::RegisterWithRegistrar(PluginRegistrarWindows *registrar) {
   auto channel =
       std::make_unique<MethodChannel<EncodableValue>>(
           registrar->messenger(), "plugins.invisiblewrench.com/flutter_midi_command",
@@ -58,6 +64,13 @@ void MidiWinPlugin::RegisterWithRegistrar(
       [plugin_pointer = plugin.get()](const auto &call, auto result) {
         plugin_pointer->HandleMethodCall(call, std::move(result));
       });
+
+	auto eventChannel = std::make_unique<FlEventChannel>(
+      registrar->messenger(), "plugins.invisiblewrench.com/flutter_midi_command/rx_channel",
+      &flutter::StandardMethodCodec::GetInstance());
+
+
+  eventChannel->SetStreamHandler(std::move(msgsStreamHandler));
 
   registrar->AddPlugin(std::move(plugin));
 }
@@ -71,6 +84,7 @@ void MidiWinPlugin::HandleMethodCall(
     std::unique_ptr<MethodResult<EncodableValue>> result) {
 
   const auto *arguments = std::get_if<EncodableMap>(method_call.arguments());
+	std::cout << "Thread dart: " << std::this_thread::get_id() << std::endl;
 
   if (method_call.method_name().compare("getDevices") == 0) {
 		EncodableList list = this->getDevices();
@@ -100,6 +114,8 @@ void MidiWinPlugin::HandleMethodCall(
     result->NotImplemented();
   }
 }
+
+////////////// GET DEVICES
 
 EncodableList MidiWinPlugin::getDevices() {
 	EncodableList devices = {};
@@ -156,7 +172,7 @@ EncodableList MidiWinPlugin::getDevices() {
 	return devices;
 }
 
-flutter::EncodableValue MidiWinPlugin::getDevice(int port, std::string portName, bool isIn) {
+EncodableValue MidiWinPlugin::getDevice(int port, std::string portName, bool isIn) {
 		EncodableList ports = EncodableList{EncodableValue(
 				EncodableMap {
 				 {EncodableValue("id"), EncodableValue(port)}
@@ -176,6 +192,10 @@ flutter::EncodableValue MidiWinPlugin::getDevice(int port, std::string portName,
 		});
 }
 
+////////////// CONNECT TO DEVICE
+// Used when a device is connected
+RtMidiIn *midiin;
+
 void mycallback( double deltatime, std::vector< unsigned char > *message, void *userData )
 {
   size_t nBytes = message->size();
@@ -183,10 +203,10 @@ void mycallback( double deltatime, std::vector< unsigned char > *message, void *
     std::cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
   if ( nBytes > 0 )
     std::cout << "stamp = " << deltatime << std::endl;
-}
 
-// Used when a device is connected
-RtMidiIn *midiin;
+	std::cout << "Thread callback: " << std::this_thread::get_id() << std::endl;
+//	msgsStreamHandler->AddMidiMessageEvent();
+}
 
 void MidiWinPlugin::connectToDevice(int portNumber) {
   midiin = new RtMidiIn();
@@ -197,10 +217,47 @@ void MidiWinPlugin::connectToDevice(int portNumber) {
   std::cout << "\nConnected to MIDI device. Reading MIDI input.\n";
 }
 
+
+///////////////////// DISCONNECT DEVICE
+
 void MidiWinPlugin::disconnectDevice() {
   delete midiin;
 
   std::cout << "\nDisconnected MIDI device.\n";
 }
+
+
+////////////////// MidiMessagesStreamHandler
+
+MidiMessagesStreamHandler::MidiMessagesStreamHandler() {}
+
+MidiMessagesStreamHandler::~MidiMessagesStreamHandler() {}
+
+void MidiMessagesStreamHandler::AddMidiMessageEvent() {
+	std::cout << "\n YEAH IT PRINTS \n";
+
+  sink->Success(EncodableValue("VALUE TO PASS"));
+}
+
+std::unique_ptr<FlStreamHandlerError>
+MidiMessagesStreamHandler::OnListenInternal(
+    const EncodableValue *arguments,
+    std::unique_ptr<FlEventSink> &&events) {
+
+  sink = std::move(events);
+
+  return nullptr;
+}
+
+std::unique_ptr<FlStreamHandlerError>
+MidiMessagesStreamHandler::OnCancelInternal(
+    const EncodableValue *arguments) {
+  sink.reset();
+  return nullptr;
+}
+
+
+
+
 
 }  // namespace midi_win_plugin

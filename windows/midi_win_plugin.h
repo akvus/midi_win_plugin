@@ -5,11 +5,23 @@
 #include <flutter/method_channel.h>
 #include <flutter/plugin_registrar_windows.h>
 #include <flutter/encodable_value.h>
+#include <flutter/event_channel.h>
+#include <flutter/event_sink.h>
+#include <flutter/event_stream_handler.h>
 
 #include <memory>
 #include <map>
 
 namespace midi_win_plugin {
+
+typedef flutter::EventChannel<flutter::EncodableValue> FlEventChannel;
+typedef flutter::EventSink<flutter::EncodableValue> FlEventSink;
+typedef flutter::MethodCall<flutter::EncodableValue> FlMethodCall;
+typedef flutter::MethodResult<flutter::EncodableValue> FlMethodResult;
+typedef flutter::MethodChannel<flutter::EncodableValue> FlMethodChannel;
+typedef flutter::StreamHandler<flutter::EncodableValue> FlStreamHandler;
+typedef flutter::StreamHandlerError<flutter::EncodableValue>
+    FlStreamHandlerError;
 
 class MidiWinPlugin : public flutter::Plugin {
  public:
@@ -34,6 +46,24 @@ class MidiWinPlugin : public flutter::Plugin {
 
 	void connectToDevice(int portNumber);
 	void disconnectDevice();
+};
+
+class MidiMessagesStreamHandler : public FlStreamHandler {
+public:
+  MidiMessagesStreamHandler();
+  virtual ~MidiMessagesStreamHandler();
+  void AddMidiMessageEvent();
+
+protected:
+  std::unique_ptr<FlStreamHandlerError>
+  OnListenInternal(const flutter::EncodableValue *arguments,
+                   std::unique_ptr<FlEventSink> &&sink) override;
+
+  std::unique_ptr<FlStreamHandlerError>
+  OnCancelInternal(const flutter::EncodableValue *arguments) override;
+
+private:
+  std::unique_ptr<FlEventSink> sink;
 };
 
 }  // namespace midi_win_plugin
