@@ -201,14 +201,8 @@ RtMidiIn *midiin;
 void mycallback( double deltatime, std::vector< unsigned char > *message, void *userData )
 {
   size_t nBytes = message->size();
-  for ( unsigned int i=0; i<nBytes; i++ )
-    std::cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
-  if ( nBytes > 0 )
-    std::cout << "stamp = " << deltatime << std::endl;
 
-	std::cout << "Thread callback: " << std::this_thread::get_id() << std::endl;
-	// TODO crashes probably because it's called from another thread
-  msgsStreamHandler->AddMidiMessageEvent();
+  msgsStreamHandler->AddMidiMessageEvent(deltatime, message, nBytes);
 }
 
 void MidiWinPlugin::connectToDevice(int portNumber) {
@@ -236,10 +230,24 @@ MidiMessagesStreamHandler::MidiMessagesStreamHandler() {}
 
 MidiMessagesStreamHandler::~MidiMessagesStreamHandler() {}
 
-void MidiMessagesStreamHandler::AddMidiMessageEvent() {
-	std::cout << "\n YEAH IT PRINTS \n";
+void MidiMessagesStreamHandler::AddMidiMessageEvent(double deltatime, std::vector< unsigned char > *message, size_t nBytes) {
 
-  sink->Success(EncodableValue("VALUE TO PASS"));
+  for ( unsigned int i=0; i<nBytes; i++ )
+    std::cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
+  if ( nBytes > 0 )
+    std::cout << "stamp = " << deltatime << std::endl;
+
+	std::cout << "Thread callback: " << std::this_thread::get_id() << std::endl;
+
+	// TODO thread issues?
+  try
+  {
+    sink->Success(EncodableValue(3));
+  }
+  catch (...)
+  {
+		std::exception_ptr p = std::current_exception();
+  }
 }
 
 std::unique_ptr<FlStreamHandlerError>

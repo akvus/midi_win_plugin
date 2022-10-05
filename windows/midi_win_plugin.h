@@ -52,7 +52,7 @@ class MidiMessagesStreamHandler : public FlStreamHandler {
 public:
   MidiMessagesStreamHandler();
   virtual ~MidiMessagesStreamHandler();
-  void AddMidiMessageEvent();
+  void AddMidiMessageEvent(double deltatime, std::vector< unsigned char > *message, size_t nBytes);
 
 protected:
   std::unique_ptr<FlStreamHandlerError>
