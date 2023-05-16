@@ -11,8 +11,23 @@
 
 #include <memory>
 #include <map>
+#include <queue>
 
 namespace midi_win_plugin {
+
+class QueueItem {
+private:
+    double deltatime;
+    std::vector<unsigned char> message;
+
+public:
+    QueueItem( double deltatime_, std::vector<unsigned char> message_):
+        deltatime(deltatime_), message(message_)
+    {}
+
+    double getDeltaTime() {return deltatime;}
+    std::vector<unsigned char> getMessage() {return message;}
+};
 
 typedef flutter::EventChannel<flutter::EncodableValue> FlEventChannel;
 typedef flutter::EventSink<flutter::EncodableValue> FlEventSink;
@@ -54,6 +69,7 @@ public:
   virtual ~MidiMessagesStreamHandler();
   void AddMidiMessageEvent(double deltatime, std::vector< unsigned char > *message, size_t nBytes);
 
+
 protected:
   std::unique_ptr<FlStreamHandlerError>
   OnListenInternal(const flutter::EncodableValue *arguments,
@@ -63,7 +79,8 @@ protected:
   OnCancelInternal(const flutter::EncodableValue *arguments) override;
 
 private:
-  std::unique_ptr<FlEventSink> sink;
+  //std::unique_ptr<FlEventSink> sink;
+
 };
 
 }  // namespace midi_win_plugin
