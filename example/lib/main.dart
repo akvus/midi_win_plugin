@@ -39,6 +39,16 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       _devices = devices;
     });
+
+    //Don't know how to register the event channel in midiCommand
+    //_midiCommand.onMidiDataReceived?.listen((event) { print("event = $event"); });
+
+    const eventChannel = EventChannel('plugins.invisiblewrench.com/flutter_midi_command/rx_channel');
+    eventChannel.receiveBroadcastStream().listen((dynamic event) {
+      print("event = $event");
+    });
+
+
   }
 
   @override
@@ -71,6 +81,8 @@ class _MyAppState extends State<MyApp> {
                       _midiCommand.connectToDevice(_devices
                           .where((element) => element.type == "IN")
                           .first);
+
+
                     },
                     child: Text("Connect")),
                 ElevatedButton(

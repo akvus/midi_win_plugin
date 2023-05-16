@@ -197,15 +197,21 @@ EncodableValue MidiWinPlugin::getDevice(int port, std::string portName, bool isI
 ////////////// CONNECT TO DEVICE
 // Used when a device is connected
 RtMidiIn *midiin;
+std::queue<QueueItem*> pktQueue;
 
+//Windows (and thus RtMidi) processes and delivers MIDI messages on a different thread!
+//We need a consumer/producer model and
+//TODO thread synchronization (i.e. SetEvent/ClearEvent/WaitForSingleObject)
 void mycallback( double deltatime, std::vector< unsigned char > *message, void *userData )
 {
-  size_t nBytes = message->size();
+  pktQueue.push(new QueueItem(deltatime, *message));
 
-  msgsStreamHandler->AddMidiMessageEvent(deltatime, message, nBytes);
+  //size_t nBytes = message->size();
+  //msgsStreamHandler->AddMidiMessageEvent(deltatime, message, nBytes);
 }
 
 void MidiWinPlugin::connectToDevice(int portNumber) {
+  std::cout << "\nConnecting to MIDI device...\n";
   midiin = new RtMidiIn();
   midiin->openPort( portNumber );
   midiin->setCallback( &mycallback );
@@ -224,12 +230,37 @@ void MidiWinPlugin::disconnectDevice() {
 }
 
 
+////////////////// Thread callback
+
+QueueItem* getQueueItem() {
+    if (pktQueue.size() == 0) {return nullptr;}
+    auto e = pktQueue.front();
+    pktQueue.pop();
+    return e;
+}
+
+void ProcessMIDIEvents(
+    std::unique_ptr<flutter::EventSink<flutter::EncodableValue>>&& events
+    ) {
+      while (true) {
+        while ( auto qi = getQueueItem()){
+            auto elem = EncodableValue(EncodableMap{
+                {EncodableValue("deltatime"), EncodableValue(qi->getDeltaTime())},
+                {EncodableValue("message"), EncodableValue(qi->getMessage())}
+            });
+            events.get()->Success(elem);
+        }
+        //sleep or block until a new event occurs
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      }
+  }
 ////////////////// MidiMessagesStreamHandler
 
 MidiMessagesStreamHandler::MidiMessagesStreamHandler() {}
 
 MidiMessagesStreamHandler::~MidiMessagesStreamHandler() {}
 
+/*
 void MidiMessagesStreamHandler::AddMidiMessageEvent(double deltatime, std::vector< unsigned char > *message, size_t nBytes) {
 
   for ( unsigned int i=0; i<nBytes; i++ )
@@ -242,30 +273,36 @@ void MidiMessagesStreamHandler::AddMidiMessageEvent(double deltatime, std::vecto
 	// TODO thread issues?
   try
   {
-    sink->Success(EncodableValue(3));
+    pktQueue.push(new QueueItem(deltatime, *message));
+    //sink->Success(EncodableValue(3));
   }
   catch (...)
   {
 		std::exception_ptr p = std::current_exception();
   }
 }
+*/
 
 std::unique_ptr<FlStreamHandlerError>
 MidiMessagesStreamHandler::OnListenInternal(
     const EncodableValue *arguments,
     std::unique_ptr<FlEventSink> &&events) {
 
-  sink = std::move(events);
-
+  //sink = std::move(events);
+  std::thread EventsProcessor(ProcessMIDIEvents, std::move(events));
+  EventsProcessor.detach(); //Don't detach (and keep a ref) if you want to manage the thread
   return nullptr;
 }
 
 std::unique_ptr<FlStreamHandlerError>
 MidiMessagesStreamHandler::OnCancelInternal(
     const EncodableValue *arguments) {
-  sink.reset();
+  //sink.reset();
+  //TODO: ensure the thread exits the infinite loop ( i.e. using a bool flag )  and join() the thread
+
   return nullptr;
 }
+
 
 
 
